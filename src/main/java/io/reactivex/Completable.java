@@ -143,7 +143,7 @@ public abstract class Completable implements CompletableSource {
     /**
      * Returns a Completable which completes only when all sources complete, one after another.
      * <dl>
-     *  <dt><b>Backpressure:</b><dt>
+     *  <dt><b>Backpressure:</b></dt>
      *  <dd>The returned {@code Completable} honors the backpressure of the downstream consumer
      *  and expects the other {@code Publisher} to honor it as well.</dd>
      *  <dt><b>Scheduler:</b></dt>
@@ -163,7 +163,7 @@ public abstract class Completable implements CompletableSource {
     /**
      * Returns a Completable which completes only when all sources complete, one after another.
      * <dl>
-     *  <dt><b>Backpressure:</b><dt>
+     *  <dt><b>Backpressure:</b></dt>
      *  <dd>The returned {@code Completable} honors the backpressure of the downstream consumer
      *  and expects the other {@code Publisher} to honor it as well.</dd>
      *  <dt><b>Scheduler:</b></dt>
@@ -207,7 +207,6 @@ public abstract class Completable implements CompletableSource {
      *
      * });
      * </code></pre>
-     * <p>
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code create} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -395,8 +394,19 @@ public abstract class Completable implements CompletableSource {
     /**
      * Returns a Completable instance that subscribes to the given publisher, ignores all values and
      * emits only the terminal event.
+     * <p>
+     * The {@link Publisher} must follow the
+     * <a href="https://github.com/reactive-streams/reactive-streams-jvm#reactive-streams">Reactive-Streams specification</a>.
+     * Violating the specification may result in undefined behavior.
+     * <p>
+     * If possible, use {@link #create(CompletableOnSubscribe)} to create a
+     * source-like {@code Completable} instead.
+     * <p>
+     * Note that even though {@link Publisher} appears to be a functional interface, it
+     * is not recommended to implement it through a lambda as the specification requires
+     * state management that is not achievable with a stateless lambda.
      * <dl>
-     *  <dt><b>Backpressure:</b><dt>
+     *  <dt><b>Backpressure:</b></dt>
      *  <dd>The returned {@code Completable} honors the backpressure of the downstream consumer
      *  and expects the other {@code Publisher} to honor it as well.</dd>
      *  <dt><b>Scheduler:</b></dt>
@@ -406,6 +416,7 @@ public abstract class Completable implements CompletableSource {
      * @param publisher the Publisher instance to subscribe to, not null
      * @return the new Completable instance
      * @throws NullPointerException if publisher is null
+     * @see #create(CompletableOnSubscribe)
      */
     @CheckReturnValue
     @BackpressureSupport(BackpressureKind.UNBOUNDED_IN)
@@ -480,7 +491,7 @@ public abstract class Completable implements CompletableSource {
      * Returns a Completable instance that subscribes to all sources at once and
      * completes only when all source Completables complete or one of them emits an error.
      * <dl>
-     *  <dt><b>Backpressure:</b><dt>
+     *  <dt><b>Backpressure:</b></dt>
      *  <dd>The returned {@code Completable} honors the backpressure of the downstream consumer
      *  and expects the other {@code Publisher} to honor it as well.</dd>
      *  <dt><b>Scheduler:</b></dt>
@@ -501,7 +512,7 @@ public abstract class Completable implements CompletableSource {
      * Returns a Completable instance that keeps subscriptions to a limited number of sources at once and
      * completes only when all source Completables complete or one of them emits an error.
      * <dl>
-     *  <dt><b>Backpressure:</b><dt>
+     *  <dt><b>Backpressure:</b></dt>
      *  <dd>The returned {@code Completable} honors the backpressure of the downstream consumer
      *  and expects the other {@code Publisher} to honor it as well.</dd>
      *  <dt><b>Scheduler:</b></dt>
@@ -525,7 +536,7 @@ public abstract class Completable implements CompletableSource {
      * completes only when all source Completables terminate in one way or another, combining any exceptions
      * thrown by either the sources Observable or the inner Completable instances.
      * <dl>
-     *  <dt><b>Backpressure:</b><dt>
+     *  <dt><b>Backpressure:</b></dt>
      *  <dd>The returned {@code Flowable} honors the backpressure of the downstream consumer
      *  and expects the other {@code Publisher} to honor it as well.
      *  <dt><b>Scheduler:</b></dt>
@@ -591,7 +602,7 @@ public abstract class Completable implements CompletableSource {
      * any error emitted by either the sources observable or any of the inner Completables until all of
      * them terminate in a way or another.
      * <dl>
-     *  <dt><b>Backpressure:</b><dt>
+     *  <dt><b>Backpressure:</b></dt>
      *  <dd>The returned {@code Completable} honors the backpressure of the downstream consumer
      *  and expects the other {@code Publisher} to honor it as well.</dd>
      *  <dt><b>Scheduler:</b></dt>
@@ -614,7 +625,7 @@ public abstract class Completable implements CompletableSource {
      * observable or any of the inner Completables until all of
      * them terminate in a way or another.
      * <dl>
-     *  <dt><b>Backpressure:</b><dt>
+     *  <dt><b>Backpressure:</b></dt>
      *  <dd>The returned {@code Completable} honors the backpressure of the downstream consumer
      *  and expects the other {@code Publisher} to honor it as well.</dd>
      *  <dt><b>Scheduler:</b></dt>
@@ -817,7 +828,7 @@ public abstract class Completable implements CompletableSource {
      * propagated to the downstream subscriber and will result in skipping the subscription of the
      * Publisher.
      * <dl>
-     *  <dt><b>Backpressure:</b><dt>
+     *  <dt><b>Backpressure:</b></dt>
      *  <dd>The returned {@code Flowable} honors the backpressure of the downstream consumer
      *  and expects the other {@code Publisher} to honor it as well.</dd>
      *  <dt><b>Scheduler:</b></dt>
@@ -1381,6 +1392,24 @@ public abstract class Completable implements CompletableSource {
     }
 
     /**
+     * Nulls out references to the upstream producer and downstream CompletableObserver if
+     * the sequence is terminated or downstream calls dispose().
+     * <dl>
+     *  <dt><b>Scheduler:</b></dt>
+     *  <dd>{@code onTerminateDetach} does not operate by default on a particular {@link Scheduler}.</dd>
+     * </dl>
+     * @return a Completable which nulls out references to the upstream producer and downstream CompletableObserver if
+     * the sequence is terminated or downstream calls dispose()
+     * @since 2.1.5 - experimental
+     */
+    @Experimental
+    @CheckReturnValue
+    @SchedulerSupport(SchedulerSupport.NONE)
+    public final Completable onTerminateDetach() {
+        return RxJavaPlugins.onAssembly(new CompletableDetach(this));
+    }
+
+    /**
      * Returns a Completable that repeatedly subscribes to this Completable until cancelled.
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
@@ -1571,7 +1600,7 @@ public abstract class Completable implements CompletableSource {
      * Returns a Flowable which first delivers the events
      * of the other Publisher then runs this Completable.
      * <dl>
-     *  <dt><b>Backpressure:</b><dt>
+     *  <dt><b>Backpressure:</b></dt>
      *  <dd>The returned {@code Flowable} honors the backpressure of the downstream consumer
      *  and expects the other {@code Publisher} to honor it as well.</dd>
      *  <dt><b>Scheduler:</b></dt>
@@ -1657,11 +1686,11 @@ public abstract class Completable implements CompletableSource {
      * Completable source = Completable.complete().delay(1, TimeUnit.SECONDS);
      * CompositeDisposable composite = new CompositeDisposable();
      *
-     * class ResourceCompletableObserver implements CompletableObserver, Disposable {
+     * DisposableCompletableObserver ds = new DisposableCompletableObserver() {
      *     // ...
-     * }
+     * };
      *
-     * composite.add(source.subscribeWith(new ResourceCompletableObserver()));
+     * composite.add(source.subscribeWith(ds));
      * </code></pre>
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
@@ -1877,7 +1906,7 @@ public abstract class Completable implements CompletableSource {
      * Returns a Flowable which when subscribed to subscribes to this Completable and
      * relays the terminal events to the subscriber.
      * <dl>
-     *  <dt><b>Backpressure:</b><dt>
+     *  <dt><b>Backpressure:</b></dt>
      *  <dd>The returned {@code Flowable} honors the backpressure of the downstream consumer.</dd>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code toFlowable} does not operate by default on a particular {@link Scheduler}.</dd>
